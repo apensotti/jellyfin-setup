@@ -80,6 +80,7 @@ docker compose up -d
        image: qmcgaw/gluetun
        container_name: gluetun
        hostname: gluetun
+       cap_add:
          - NET_ADMIN
        devices:
          - /dev/net/tun:/dev/net/tun

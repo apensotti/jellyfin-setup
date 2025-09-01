@@ -48,8 +48,9 @@ sudo docker run hello-world
 ### Installation
 ```bash
 # Create directories that store your stacks and stores Dockge's stack
-cd ~
-mkdir -p /opt/stacks /opt/dockge
+cd /
+sudo mkdir -p /opt/stacks /opt/dockge
+sudo chown -R $USER:$USER /opt
 cd /opt/dockge
 
 # Download the compose.yaml

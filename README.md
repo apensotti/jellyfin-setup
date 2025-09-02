@@ -452,8 +452,6 @@ services:
 networks:
   jellyfin-network:
     driver: bridge
-  servarr_servarr-network:
-    external: true
 ```
 
 ## Jellyfin Setup

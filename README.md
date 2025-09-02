@@ -173,7 +173,10 @@ WIREGUARD_PRIVATE_KEY=[YOUR_PRIVATE_KEY]
         retries: 5
       restart: unless-stopped
       networks:
-        - vpn-routed-containers
+        - servarr-network
+  networks:
+  servarr-network:
+    driver: bridge
    ```
 
 </details>
@@ -350,7 +353,7 @@ Setup for **Prowlarr**, **Radarr**, and **Sonarr**.
       - 8989:8989
     restart: unless-stopped
     networks:
-      - vpn-routed-containers
+      - servarr-network
   radarr:
     image: lscr.io/linuxserver/radarr:latest
     container_name: radarr
@@ -367,7 +370,7 @@ Setup for **Prowlarr**, **Radarr**, and **Sonarr**.
       - 7878:7878
     restart: unless-stopped
     networks:
-      - vpn-routed-containers
+      - servarr-network
 ```
 
 ```properties 
@@ -426,21 +429,19 @@ services:
   jellyfin:
     image: jellyfin/jellyfin:latest
     container_name: jellyfin
-    labels:
-      - com.centurylinklabs.watchtower.enable=false
-    user: 1000:1000
+    user: ${PUID}:${PGID}
     volumes:
-      - ./data/config:/config
-      - ./data/cache:/cache      
+      - ./jellyfin:/config
+      - ./jellyfin/cache:/cache
       - type: bind
-        source: /mnt/media/Radarr/Movies
-        target: /media/Radarr
+        source: ${MOVIES_DIRECTORY}
+        target: /media/movies
       - type: bind
-        source: /mnt/media/Sonarr/tvshows
-        target: /media/Sonarr
+        source: ${SHOWS_DIRECTORY}
+        target: /media/shows
       - type: bind
-        source: /mnt/media/Genres
-        target: /media/Genres
+        source: ${GENRES_DIRECTORY}
+        target: /media/genres
     restart: unless-stopped
     extra_hosts:
       - host.docker.internal:host-gateway
@@ -448,6 +449,11 @@ services:
       - jellyfin-network
     ports:
       - 8096:8096
+networks:
+  jellyfin-network:
+    driver: bridge
+  servarr_servarr-network:
+    external: true
 ```
 
 ## Jellyfin Setup
@@ -456,8 +462,8 @@ services:
 
 1. **Language Selection** & **Admin Account** setup
 2. **Add Media Libraries:**
-   - Movies: `/media/Radarr`
-   - TV Shows: `/media/Sonarr`
+   - Movies: `/media/movies`
+   - TV Shows: `/media/shows`
 
 Once you've setup and logged into Jellyfin, go back to Dockge and add these binds to Jellyfin volumes.
 

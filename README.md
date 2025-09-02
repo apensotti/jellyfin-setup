@@ -609,3 +609,106 @@ Setting up Jellyseer:
    - Root Folder: /data/tv
 
 </details>
+
+<details>
+<summary>
+<h2><img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/nginx-proxy-manager.png" width="32" height="32"> Nginx Proxy Manager</h2>
+</summary>
+
+Nginx Proxy Manager is a simple, powerful tool for managing Nginx proxy hosts with a beautiful web interface. It allows you to easily set up SSL certificates, manage domains, and create proxy configurations without touching Nginx configuration files.
+
+### Docker Compose
+
+```yaml
+services:
+  nginx:
+    image: jc21/nginx-proxy-manager:latest
+    restart: unless-stopped
+    ports:
+      # These ports are in format <host-port>:<container-port>
+      - 80:80 # Public HTTP Port
+      - 443:443 # Public HTTPS Port
+      - 81:81 # Admin Web Port
+    volumes:
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
+networks:
+  jellyfin_jellyfin-network:
+    external: true
+  servarr_servarr-network:
+    external: true
+```
+
+### Initial Setup
+
+**Access:** [`http://localhost:81`](http://localhost:81)
+
+**Default Login Credentials:**
+- Email: `admin@example.com`
+- Password: `changeme`
+
+**Important:** Change these credentials immediately after first login!
+
+### Configuration Steps
+
+1. **Login** with default credentials
+2. **Change Admin Credentials:**
+   - Go to Users → Edit admin user
+   - Update email and password
+   - Save changes
+
+3. **Add Proxy Hosts:**
+   - Click "Proxy Hosts" → "Add Proxy Host"
+   - Enter your domain name
+   - Set destination IP and port (e.g., `jellyfin:8096`)
+   - Enable "Block Common Exploits"
+   - Enable "Websockets Support" if needed
+
+4. **SSL Certificate Setup:**
+   - Go to the "SSL" tab
+   - Select "Request a new SSL Certificate"
+   - Enter your email
+   - Enable "Force SSL" and "HTTP/2 Support"
+   - Click "Save"
+
+### Common Proxy Configurations
+
+**Jellyfin Media Server:**
+- Domain: `jellyfin.yourdomain.com`
+- Forward IP: `jellyfin` (container name)
+- Forward Port: `8096`
+- Enable Websockets Support
+
+**Radarr:**
+- Domain: `radarr.yourdomain.com` 
+- Forward IP: `radarr`
+- Forward Port: `7878`
+
+**Sonarr:**
+- Domain: `sonarr.yourdomain.com`
+- Forward IP: `sonarr` 
+- Forward Port: `8989`
+
+**Jellyseerr:**
+- Domain: `requests.yourdomain.com`
+- Forward IP: `jellyseerr`
+- Forward Port: `5055`
+
+### Security Recommendations
+
+1. **Access Lists:** Create access lists to restrict admin panel access
+2. **Strong Passwords:** Use complex passwords for all accounts
+3. **Regular Updates:** Keep Nginx Proxy Manager updated
+4. **Firewall Rules:** Configure firewall to only allow necessary ports
+5. **SSL Only:** Always force SSL for public-facing services
+
+### Troubleshooting
+
+**Common Issues:**
+- **502 Bad Gateway:** Check if target service is running and accessible
+- **SSL Certificate Fails:** Ensure domain points to your server's public IP
+- **Can't Access Admin Panel:** Check if port 81 is accessible and not blocked by firewall
+
+**Logs Location:** Check container logs in Dockge or use `docker logs nginx-proxy-manager`
+
+</details>

@@ -298,7 +298,6 @@ Setup for **Prowlarr**, **Radarr**, and **Sonarr**.
       - gluetun
   flaresolverr:
     container_name: flaresolverr
-    network_mode: service:gluetun
     ports:
       - 8191:8191
     environment:

@@ -275,28 +275,66 @@ https://shahidrazi.online:443/announce
 Setup for **Prowlarr**, **Radarr**, and **Sonarr**.
 
 ### 1. Deploy Stack
-1. Access [Dockge](http://localhost:5001) → Create New Stack
-2. Upload `arrs.docker-compose.yaml` and deploy
-
-**Services:** Prowlarr `:9697` | Radarr `:7878` | Sonarr `:8989`
+```yaml
+services:
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    volumes:
+      - /mnt/media/Prowlarr/Config:/config
+      - /mnt/media/Prowlarr/Backup:/data/Backup
+      - /mnt/media/Downloads:/data/downloads
+    ports:
+      - 9697:9696
+    restart: unless-stopped
+    networks:
+      - app-network
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    volumes:
+      - /mnt/media/Sonarr/Config:/config
+      - /mnt/media/Sonarr/Backup:/data/Backup
+      - /mnt/media/Sonarr/tvshows:/data/tvshows
+      - /mnt/media/Downloads:/data/downloads
+    ports:
+      - 8989:8989
+    restart: unless-stopped
+    networks:
+      - app-network
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    volumes:
+      - /mnt/media/Radarr/Config:/config
+      - /mnt/media/Radarr/Movies:/data/movies
+      - /mnt/media/Downloads:/data/downloads
+      - /mnt/media/Backup:/data/Backup
+    ports:
+      - 7878:7878
+    restart: unless-stopped
+    networks:
+      - app-network
+networks:
+  app-network: null
+```
 
 ### 2. Set Permissions
 
 ```bash
-# Create directories
-sudo mkdir -p /mnt/media/{Downloads,Prowlarr,Sonarr,Radarr}
-sudo mkdir -p /mnt/media/Prowlarr/{Config,Backup}
-sudo mkdir -p /mnt/media/Sonarr/{Config,Backup,tvshows}
-sudo mkdir -p /mnt/media/Radarr/{Config,Movies}
-sudo mkdir -p /mnt/media/Downloads/{complete,incomplete}
-
-# Set permissions
 sudo chown -R $USER:$USER /mnt/media
-sudo chmod -R 755 /mnt/media
-sudo chmod -R 775 /mnt/media/Downloads
-
-# Check your user ID (note uid/gid for Docker config)
-id $USER
 ```
 
 ### 3. Prowlarr Configuration

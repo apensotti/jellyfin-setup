@@ -86,7 +86,7 @@ sudo docker compose up -d
        devices:
          - /dev/net/tun:/dev/net/tun
        ports:
-         - 8085:8085 # qbittorrent
+         - 8080:8080 # qbittorrent
          - 6881:6881 # qbittorrent listen
          - 6881:6881/udp # qbittorrent listen
          - 9697:9696 # prowlarr

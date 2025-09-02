@@ -73,36 +73,6 @@ sudo docker compose up -d
 <h2><img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/nordvpn.png" width="32" height="32"> NordVPN + Gluetun Setup</h2>
 </summary>
 
-## Gluetun
-   
-   ```yaml
-  services:
-   gluetun:
-       image: qmcgaw/gluetun
-       container_name: gluetun
-       hostname: gluetun
-       cap_add:
-         - NET_ADMIN
-       devices:
-         - /dev/net/tun:/dev/net/tun
-       ports:
-         - 8080:8080 # qbittorrent
-         - 6881:6881 # qbittorrent listen
-         - 6881:6881/udp # qbittorrent listen
-         - 9696:9696 # prowlarr
-         - 8191:8191 # flaresolverr
-       volumes:
-         - /home/homenet/src/stacks/gluetun:/gluetun
-       environment:
-         - VPN_SERVICE_PROVIDER=nordvpn
-         - VPN_TYPE=wireguard
-         - WIREGUARD_PRIVATE_KEY=[YOUR_PRIVATE_KEY] # wg show nordlynx private-key
-         - WIREGUARD_ADDRESSES=[YOUR_INET_IP] # ifconfig nordlynx
-         - TZ=Denver
-         - UPDATER_PERIOD=24h
-       restart: unless-stopped
-   ```
-
 ### Install NordVPN Client
 
 ```bash
@@ -157,8 +127,54 @@ sudo wg show nordlynx private-key
 ifconfig nordlynx
 ```
 
+## Gluetun
+
 Copy the private key and IP address (e.g., `10.5.0.2/16`) to your Gluetun Docker configuration.
 
+```properties
+# .env
+
+VPN_SERVICE_PROVIDER=nordvpn
+VPN_TYPE=wireguard
+WIREGUARD_ADDRESSES=[YOUR_INET_IP]
+WIREGUARD_PRIVATE_KEY=[YOUR_PRIVATE_KEY]
+```
+
+
+   
+   ```yaml
+  services:
+    gluetun:
+      image: qmcgaw/gluetun
+      container_name: gluetun
+      hostname: gluetun
+      cap_add:
+        - NET_ADMIN
+      devices:
+        - /dev/net/tun:/dev/net/tun
+      ports:
+        - 8080:8080 # qbittorrent
+        - 6881:6881 # qbittorrent listen
+        - 6881:6881/udp # qbittorrent listen
+        - 9696:9696 # prowlarr
+      volumes:
+        - ./gluetun:/gluetun
+      environment:
+        - VPN_SERVICE_PROVIDER=${VPN_SERVICE_PROVIDER}
+        - VPN_TYPE=${VPN_TYPE}
+        - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY}
+        - WIREGUARD_ADDRESSES=${WIREGUARD_ADDRESSES}
+        - TZ=${TZ}
+        - UPDATER_PERIOD=24h
+      healthcheck:
+        test: ping -c 1 www.google.com || exit 1
+        interval: 20s
+        timeout: 10s
+        retries: 5
+      restart: unless-stopped
+      networks:
+        - vpn-routed-containers
+   ```
 
 </details>
 
@@ -174,17 +190,29 @@ qbittorrent:
     container_name: qbittorrent
     network_mode: service:gluetun
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
       - WEBUI_PORT=8080
     volumes:
       - ./qbittorrent:/config
-      - /mnt/media/Downloads:/downloads
+      - ${DOWNLOADS_DIRECTORY}:/downloads
     restart: unless-stopped
     depends_on:
-      - gluetun
+      gluetun:
+        condition: service_healthy
 ```
+
+```properties
+# .env
+
+TZ=America/New_York
+PUID=1000
+PGID=1000
+
+DOWNLOADS_DIRECTORY=/mnt/media/Downloads
+```
+
 ### QBittorrent Configuration
 
 **Access:** `127.0.0.1:8085` | **NZBget:** `127.0.0.1:6789`
@@ -279,24 +307,23 @@ https://shahidrazi.online:443/announce
 
 Setup for **Prowlarr**, **Radarr**, and **Sonarr**.
 
-### 1. Deploy Prowlarr to ```vpn-routed-containers```
+2. Deploy Radarr and Sonarr
 ```yaml
-
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
     container_name: prowlarr
     network_mode: service:gluetun
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     volumes:
-      - /mnt/media/Prowlarr/Config:/config
-      - /mnt/media/Prowlarr/Backup:/data/Backup
-      - /mnt/media/Downloads:/data/downloads
+      - ./prowlarr:/config
+      - ./prowlarr/backup:/data/backup
     restart: unless-stopped
     depends_on:
-      - gluetun
+      gluetun:
+        condition: service_healthy
   flaresolverr:
     container_name: flaresolverr
     image: ghcr.io/flaresolverr/flaresolverr:latest
@@ -305,49 +332,49 @@ Setup for **Prowlarr**, **Radarr**, and **Sonarr**.
       - LOG_LEVEL=info
     restart: unless-stopped
     depends_on:
-      - gluetun
-
-```
-
-2. Deploy Radarr and Sonarr
-```yaml
-services:
+      gluetun:
+        condition: service_healthy
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
     container_name: sonarr
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     volumes:
-      - /mnt/media/Sonarr/Config:/config
-      - /mnt/media/Sonarr/Backup:/data/Backup
-      - /mnt/media/Sonarr/tvshows:/data/tvshows
-      - /mnt/media/Downloads:/data/downloads
+      - ./sonarr:/config
+      - ${SONARR_BACKUP_DIR}:/data/Backup
+      - ${SHOWS_DIRECTORY}:/data/tvshows
+      - ${DOWNLOADS_DIRECTORY}:/data/downloads
     ports:
       - 8989:8989
     restart: unless-stopped
     networks:
-      - app-network
+      - vpn-routed-containers
   radarr:
     image: lscr.io/linuxserver/radarr:latest
     container_name: radarr
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     volumes:
-      - /mnt/media/Radarr/Config:/config
-      - /mnt/media/Radarr/Movies:/data/movies
-      - /mnt/media/Downloads:/data/downloads
-      - /mnt/media/Backup:/data/Backup
+      - ./radarr:/config
+      - ${MOVIES_DIRECTORY}:/data/movies
+      - ${RADARR_BACKUP_DIR}:/data/backup
+      - ${DOWNLOADS_DIRECTORY}:/data/downloads
     ports:
       - 7878:7878
     restart: unless-stopped
     networks:
-      - app-network
-networks:
-  app-network: null
+      - vpn-routed-containers
+```
+
+```properties 
+MOVIES_DIRECTORY=/mnt/media/Radarr/Movies
+RADARR_BACKUP_DIR=/mnt/media/Radarr/Backup
+SHOWS_DIRECTORY=/mnt/media/Sonarr/Shows
+SONARR_BACKUP_DIR=/mnt/media/Sonarr/Backup
 ```
 
 ### 2. Set Permissions
@@ -401,7 +428,7 @@ services:
     container_name: jellyfin
     labels:
       - com.centurylinklabs.watchtower.enable=false
-    user: 0:0
+    user: 1000:1000
     volumes:
       - ./data/config:/config
       - ./data/cache:/cache      

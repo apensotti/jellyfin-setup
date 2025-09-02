@@ -296,6 +296,14 @@ Setup for **Prowlarr**, **Radarr**, and **Sonarr**.
     restart: unless-stopped
     depends_on:
       - gluetun
+  flaresolverr:
+    container_name: flaresolverr
+    ports:
+      - 8191:8191
+    environment:
+      - LOG_LEVEL=info
+    restart: unless-stopped
+    image: ghcr.io/flaresolverr/flaresolverr:latest
 
 ```
 

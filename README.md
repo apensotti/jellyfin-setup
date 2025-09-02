@@ -278,12 +278,13 @@ https://shahidrazi.online:443/announce
 
 Setup for **Prowlarr**, **Radarr**, and **Sonarr**.
 
-### 1. Deploy Stack
+### 1. Deploy Prowlarr to ```vpn-routed-containers```
 ```yaml
-services:
+
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
     container_name: prowlarr
+    network_mode: service:gluetun
     environment:
       - PUID=1000
       - PGID=1000
@@ -292,11 +293,15 @@ services:
       - /mnt/media/Prowlarr/Config:/config
       - /mnt/media/Prowlarr/Backup:/data/Backup
       - /mnt/media/Downloads:/data/downloads
-    ports:
-      - 9697:9696
     restart: unless-stopped
-    networks:
-      - app-network
+    depends_on:
+      - gluetun
+
+```
+
+2. Deploy Radarr and Sonarr
+```yaml
+services:
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
     container_name: sonarr

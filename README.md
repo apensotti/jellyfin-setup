@@ -76,6 +76,7 @@ docker compose up -d
 ## Gluetun
    
    ```yaml
+  services:
    gluetun:
        image: qmcgaw/gluetun
        container_name: gluetun
@@ -86,6 +87,9 @@ docker compose up -d
          - /dev/net/tun:/dev/net/tun
        ports:
          - 8085:8085 # qbittorrent
+         - 6881:6881 # qbittorrent listen
+         - 6881:6881/udp # qbittorrent listen
+         - 9697:9696 # prowlarr
        volumes:
          - /home/homenet/src/stacks/gluetun:/gluetun
        environment:

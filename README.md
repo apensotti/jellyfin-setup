@@ -89,7 +89,8 @@ sudo docker compose up -d
          - 8080:8080 # qbittorrent
          - 6881:6881 # qbittorrent listen
          - 6881:6881/udp # qbittorrent listen
-         - 9697:9696 # prowlarr
+         - 9696:9696 # prowlarr
+         - 8191:8191 # flaresolverr
        volumes:
          - /home/homenet/src/stacks/gluetun:/gluetun
        environment:
@@ -298,12 +299,13 @@ Setup for **Prowlarr**, **Radarr**, and **Sonarr**.
       - gluetun
   flaresolverr:
     container_name: flaresolverr
-    ports:
-      - 8191:8191
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    network_mode: service:gluetun
     environment:
       - LOG_LEVEL=info
     restart: unless-stopped
-    image: ghcr.io/flaresolverr/flaresolverr:latest
+    depends_on:
+      - gluetun
 
 ```
 

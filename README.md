@@ -57,7 +57,7 @@ cd /opt/dockge
 curl https://raw.githubusercontent.com/louislam/dockge/master/compose.yaml --output compose.yaml
 
 # Start the server
-docker compose up -d
+sudo docker compose up -d
 
 # If you are using docker-compose V1 or Podman
 # docker-compose up -d
